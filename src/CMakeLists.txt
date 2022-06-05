@@ -12,6 +12,9 @@ add_library(
 # Include the kernel header files.
 target_include_directories(FreeRTOS PUBLIC include)
 
+# Silence warning.
+target_compile_options(FreeRTOS PRIVATE -Wno-duplicated-branches)
+
 # Create a library for each dynamic memory heap implementation.
 add_library(FreeRTOS_heap_1 EXCLUDE_FROM_ALL portable/MemMang/heap_1.c)
 add_library(FreeRTOS_heap_2 EXCLUDE_FROM_ALL portable/MemMang/heap_2.c)
