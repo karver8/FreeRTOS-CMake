@@ -4695,6 +4695,22 @@ TickType_t uxTaskResetEventItemValue( void )
             /* Mark this task as waiting for a notification. */
             pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
 
+            #if ( INCLUDE_vTaskSuspend == 1 )
+                if( xTicksToWait == portMAX_DELAY )
+                {
+                    prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
+                    traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
+
+                    /* All ports are written to allow a yield in a critical
+                    * section (some will yield immediately, others wait until the
+                    * critical section exits) - but it is not something that
+                    * application code should ever do. */
+                    portYIELD_WITHIN_API();
+                    taskEXIT_CRITICAL();
+                }
+                else
+            #endif /* if ( INCLUDE_vTaskSuspend == 1 ) */
+
             if( xTicksToWait > ( TickType_t ) 0 )
             {
                 /* Suspend the scheduler before enabling interrupts. */
@@ -4704,10 +4720,6 @@ TickType_t uxTaskResetEventItemValue( void )
                 prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
                 traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
 
-                /* All ports are written to allow a yield in a critical
-                 * section (some will yield immediately, others wait until the
-                 * critical section exits) - but it is not something that
-                 * application code should ever do. */
                 portYIELD_WITHIN_API();
                 ( void ) xTaskResumeAll();
             }
@@ -4777,6 +4789,22 @@ TickType_t uxTaskResetEventItemValue( void )
             /* Mark this task as waiting for a notification. */
             pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
 
+            #if ( INCLUDE_vTaskSuspend == 1 )
+                if( xTicksToWait == portMAX_DELAY )
+                {
+                    prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
+                    traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
+
+                    /* All ports are written to allow a yield in a critical
+                    * section (some will yield immediately, others wait until the
+                    * critical section exits) - but it is not something that
+                    * application code should ever do. */
+                    portYIELD_WITHIN_API();
+                    taskEXIT_CRITICAL();
+                }
+                else
+            #endif /* if ( INCLUDE_vTaskSuspend == 1 ) */
+
             if( xTicksToWait > ( TickType_t ) 0 )
             {
                 /* Suspend the scheduler before enabling interrupts. */
@@ -4786,10 +4814,6 @@ TickType_t uxTaskResetEventItemValue( void )
                 prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
                 traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
 
-                /* All ports are written to allow a yield in a critical
-                 * section (some will yield immediately, others wait until the
-                 * critical section exits) - but it is not something that
-                 * application code should ever do. */
                 portYIELD_WITHIN_API();
                 ( void ) xTaskResumeAll();
             }
