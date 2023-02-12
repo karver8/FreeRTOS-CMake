@@ -4687,39 +4687,67 @@ TickType_t uxTaskResetEventItemValue( void )
 
         configASSERT( uxIndexToWait < configTASK_NOTIFICATION_ARRAY_ENTRIES );
 
-        taskENTER_CRITICAL();
-
-        /* Only block if the notification count is not already non-zero. */
-        if( pxCurrentTCB->ulNotifiedValue[ uxIndexToWait ] == 0UL )
-        {
-            /* Mark this task as waiting for a notification. */
-            pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
-
-            #if ( INCLUDE_vTaskSuspend == 1 )
-                if( xTicksToWait == portMAX_DELAY )
+        #if ( INCLUDE_vTaskSuspend == 1 )
+            if( xTicksToWait == portMAX_DELAY )
+            {
+                taskENTER_CRITICAL();
                 {
-                    /* The list will not be walked in this case. */
-                    prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
-                    traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
+                    /* Only block if the notification count is not already non-zero. */
+                    if( pxCurrentTCB->ulNotifiedValue[ uxIndexToWait ] == 0UL )
+                    {
+                        /* Mark this task as waiting for a notification. */
+                        pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
 
-                    /* All ports are written to allow a yield in a critical
-                    * section (some will yield immediately, others wait until the
-                    * critical section exits) - but it is not something that
-                    * application code should ever do. */
-                    portYIELD_WITHIN_API();
-                    taskEXIT_CRITICAL();
+                        /* The list will not be walked in this case. */
+                        prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
+                        traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
+
+                        /* All ports are written to allow a yield in a critical
+                        * section (some will yield immediately, others wait until the
+                        * critical section exits) - but it is not something that
+                        * application code should ever do. */
+                        portYIELD_WITHIN_API();
+                    }
+                    else
+                    {
+                        mtCOVERAGE_TEST_MARKER();
+                    }
+                }
+                taskEXIT_CRITICAL();
+            }
+            else
+        #endif /* if ( INCLUDE_vTaskSuspend == 1 ) */
+
+        if( xTicksToWait == ( TickType_t ) 0 )
+        {
+            taskENTER_CRITICAL();
+            {
+                /* Only block if the notification count is not already non-zero. */
+                if( pxCurrentTCB->ulNotifiedValue[ uxIndexToWait ] == 0UL )
+                {
+                    /* Mark this task as waiting for a notification. */
+                    pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
                 }
                 else
-            #endif /* if ( INCLUDE_vTaskSuspend == 1 ) */
+                {
+                    mtCOVERAGE_TEST_MARKER();
+                }
+            }
+            taskEXIT_CRITICAL();
+        }
+        else
+        {
+            vTaskSuspendAll();
+            taskENTER_CRITICAL();
 
-            if( xTicksToWait > ( TickType_t ) 0 )
+            /* Only block if the notification count is not already non-zero. */
+            if( pxCurrentTCB->ulNotifiedValue[ uxIndexToWait ] == 0UL )
             {
+                /* Mark this task as waiting for a notification. */
+                pxCurrentTCB->ucNotifyState[ uxIndexToWait ] = taskWAITING_NOTIFICATION;
+
                 traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
-
-                /* Suspend the scheduler before enabling interrupts. */
-                vTaskSuspendAll();
                 taskEXIT_CRITICAL();
-
                 prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
 
                 if( xTaskResumeAll() == pdFALSE )
@@ -4734,11 +4762,8 @@ TickType_t uxTaskResetEventItemValue( void )
             else
             {
                 taskEXIT_CRITICAL();
+                ( void ) xTaskResumeAll();
             }
-        }
-        else
-        {
-            taskEXIT_CRITICAL();
         }
 
         taskENTER_CRITICAL();
