@@ -4698,6 +4698,7 @@ TickType_t uxTaskResetEventItemValue( void )
             #if ( INCLUDE_vTaskSuspend == 1 )
                 if( xTicksToWait == portMAX_DELAY )
                 {
+                    /* The list will not be walked in this case. */
                     prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
                     traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
 
@@ -4713,15 +4714,22 @@ TickType_t uxTaskResetEventItemValue( void )
 
             if( xTicksToWait > ( TickType_t ) 0 )
             {
+                traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
+
                 /* Suspend the scheduler before enabling interrupts. */
                 vTaskSuspendAll();
                 taskEXIT_CRITICAL();
 
                 prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
-                traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
 
-                portYIELD_WITHIN_API();
-                ( void ) xTaskResumeAll();
+                if( xTaskResumeAll() == pdFALSE )
+                {
+                    portYIELD_WITHIN_API();
+                }
+                else
+                {
+                    mtCOVERAGE_TEST_MARKER();
+                }
             }
             else
             {
@@ -4792,6 +4800,7 @@ TickType_t uxTaskResetEventItemValue( void )
             #if ( INCLUDE_vTaskSuspend == 1 )
                 if( xTicksToWait == portMAX_DELAY )
                 {
+                    /* The list will not be walked in this case. */
                     prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
                     traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
 
@@ -4807,15 +4816,22 @@ TickType_t uxTaskResetEventItemValue( void )
 
             if( xTicksToWait > ( TickType_t ) 0 )
             {
+                traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
+
                 /* Suspend the scheduler before enabling interrupts. */
                 vTaskSuspendAll();
                 taskEXIT_CRITICAL();
 
                 prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
-                traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
 
-                portYIELD_WITHIN_API();
-                ( void ) xTaskResumeAll();
+                if( xTaskResumeAll() == pdFALSE )
+                {
+                    portYIELD_WITHIN_API();
+                }
+                else
+                {
+                    mtCOVERAGE_TEST_MARKER();
+                }
             }
             else
             {
