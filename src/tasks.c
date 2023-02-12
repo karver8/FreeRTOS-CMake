@@ -4699,7 +4699,7 @@ TickType_t uxTaskResetEventItemValue( void )
                 if( xTicksToWait == portMAX_DELAY )
                 {
                     /* The list will not be walked in this case. */
-                    prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
+                    prvAddCurrentTaskToDelayedList( portMAX_DELAY, pdTRUE );
                     traceTASK_NOTIFY_TAKE_BLOCK( uxIndexToWait );
 
                     /* All ports are written to allow a yield in a critical
@@ -4801,7 +4801,7 @@ TickType_t uxTaskResetEventItemValue( void )
                 if( xTicksToWait == portMAX_DELAY )
                 {
                     /* The list will not be walked in this case. */
-                    prvAddCurrentTaskToDelayedList( xTicksToWait, pdTRUE );
+                    prvAddCurrentTaskToDelayedList( portMAX_DELAY, pdTRUE );
                     traceTASK_NOTIFY_WAIT_BLOCK( uxIndexToWait );
 
                     /* All ports are written to allow a yield in a critical
